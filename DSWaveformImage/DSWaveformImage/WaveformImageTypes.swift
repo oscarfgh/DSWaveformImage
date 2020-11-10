@@ -53,6 +53,12 @@ public struct WaveformConfiguration {
 
     /// Scale to be applied to the image, defaults to main screen's scale.
     let scale: CGFloat
+    
+    /// When the style is striped space between lines
+    let lineSpacing: CGFloat
+    
+    /// When the style is striped width of the line
+    let lineWidth: CGFloat
 
     /// Optional padding or vertical shrinking factor for the waveform.
     let paddingFactor: CGFloat?
@@ -63,6 +69,8 @@ public struct WaveformConfiguration {
                 style: WaveformStyle = .gradient,
                 position: WaveformPosition = .middle,
                 scale: CGFloat = UIScreen.main.scale,
+                lineSpacing: CGFloat = 0.0,
+                lineWidth: CGFloat = 0.0,
                 paddingFactor: CGFloat? = nil) {
         self.color = color
         self.backgroundColor = backgroundColor
@@ -70,6 +78,8 @@ public struct WaveformConfiguration {
         self.position = position
         self.size = size
         self.scale = scale
+        self.lineSpacing = lineSpacing
+        self.lineWidth = lineWidth
         self.paddingFactor = paddingFactor
     }
 }

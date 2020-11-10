@@ -21,6 +21,8 @@ public class WaveformImageDrawer {
                                                         style: configuration.style,
                                                         position: configuration.position,
                                                         scale: configuration.scale,
+                                                        lineSpacing: configuration.lineSpacing * (configuration.scale),
+                                                        lineWidth: configuration.lineWidth * (configuration.scale),
                                                         paddingFactor: configuration.paddingFactor)
         guard let waveformAnalyzer = WaveformAnalyzer(audioAssetURL: audioAssetURL) else {
             completionHandler(nil)
@@ -37,11 +39,14 @@ public class WaveformImageDrawer {
                               style: WaveformStyle = .gradient,
                               position: WaveformPosition = .middle,
                               scale: CGFloat = UIScreen.main.scale,
+                              lineSpacing: CGFloat = 0.0,
+                              lineWidth: CGFloat = 0.0,
                               paddingFactor: CGFloat? = nil,
                               qos: DispatchQoS.QoSClass = .userInitiated,
                               completionHandler: @escaping (_ waveformImage: UIImage?) -> ()) {
         let configuration = WaveformConfiguration(size: size, color: color, backgroundColor: backgroundColor,
                                                   style: style, position: position, scale: scale,
+                                                  lineSpacing: lineSpacing, lineWidth: lineWidth,
                                                   paddingFactor: paddingFactor)
         waveformImage(fromAudioAt: audioAssetURL, with: configuration, completionHandler: completionHandler)
     }
@@ -56,7 +61,11 @@ private extension WaveformImageDrawer {
                 with configuration: WaveformConfiguration,
                 qos: DispatchQoS.QoSClass,
                 completionHandler: @escaping (_ waveformImage: UIImage?) -> ()) {
-        let sampleCount = Int(configuration.size.width * configuration.scale)
+        var divider: CGFloat = 1.0
+        if configuration.style == .striped && configuration.lineWidth != 0 && configuration.lineSpacing != 0 {
+            divider = configuration.lineWidth + configuration.lineSpacing
+        }
+        let sampleCount = Int((configuration.size.width) / divider)
         waveformAnalyzer.samples(count: sampleCount, qos: qos) { samples in
             guard let samples = samples else {
                 completionHandler(nil)
@@ -113,17 +122,23 @@ private extension WaveformImageDrawer {
 
         let path = CGMutablePath()
         var maxAmplitude: CGFloat = 0.0 // we know 1 is our max in normalized data, but we keep it 'generic'
-        context.setLineWidth(1.0 / configuration.scale)
+        var lineSpacing: CGFloat = 0.0
+        var lineWidth: CGFloat = 1.0
+        
+        if configuration.style == .striped && configuration.lineWidth != 0 && configuration.lineSpacing != 0 {
+            lineSpacing = configuration.lineSpacing
+            lineWidth = configuration.lineWidth
+            context.setLineCap(.round)
+        }
+        let adjustPos = lineWidth + lineSpacing
+        context.setLineWidth(lineWidth)
         for (x, sample) in samples.enumerated() {
-            let xPos = CGFloat(x) / configuration.scale
+            let xPos = (CGFloat(x) * adjustPos) + (lineWidth / 2.0)
             let invertedDbSample = 1 - CGFloat(sample) // sample is in dB, linearly normalized to [0, 1] (1 -> -50 dB)
             let drawingAmplitude = max(minimumGraphAmplitude, invertedDbSample * drawMappingFactor)
             let drawingAmplitudeUp = positionAdjustedGraphCenter - drawingAmplitude
             let drawingAmplitudeDown = positionAdjustedGraphCenter + drawingAmplitude
             maxAmplitude = max(drawingAmplitude, maxAmplitude)
-
-            if configuration.style == .striped && (Int(xPos) % 5 != 0) { continue }
-
             path.move(to: CGPoint(x: xPos, y: drawingAmplitudeUp))
             path.addLine(to: CGPoint(x: xPos, y: drawingAmplitudeDown))
         }

@@ -24,7 +24,10 @@ class ViewController: UIViewController {
         waveformImageDrawer.waveformImage(fromAudioAt: audioURL,
                                           size: topWaveformView.bounds.size,
                                           style: .striped,
-                                          position: .top) { image in
+                                          position: .top,
+                                          lineSpacing: 1,
+                                          lineWidth: 1
+        ) { image in
             // need to jump back to main queue
             DispatchQueue.main.async {
                 self.topWaveformView.image = image
