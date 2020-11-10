@@ -65,7 +65,7 @@ private extension WaveformImageDrawer {
         if configuration.style == .striped && configuration.lineWidth != 0 && configuration.lineSpacing != 0 {
             divider = configuration.lineWidth + configuration.lineSpacing
         }
-        let sampleCount = Int((configuration.size.width) / divider)
+        let sampleCount = Int(configuration.size.width / divider)
         waveformAnalyzer.samples(count: sampleCount, qos: qos) { samples in
             guard let samples = samples else {
                 completionHandler(nil)
